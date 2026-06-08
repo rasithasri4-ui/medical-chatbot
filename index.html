@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="MedAssist - AI-powered medical information chatbot providing general health guidance. Not a substitute for professional medical advice." />
+  <meta name="keywords" content="medical chatbot, health information, AI health assistant, symptom checker" />
+  <meta name="author" content="MedAssist AI" />
+  <title>MedAssist — AI Medical Information Assistant</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===== APP SHELL ===== -->
+  <div class="app-shell" id="appShell">
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar" role="complementary" aria-label="Sidebar navigation">
+
+      <!-- Logo / Brand -->
+      <div class="sidebar-brand">
+        <div class="brand-icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="28" height="28" rx="8" fill="url(#brandGrad)"/>
+            <path d="M14 6v16M6 14h16" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+            <defs>
+              <linearGradient id="brandGrad" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#3b82f6"/>
+                <stop offset="1" stop-color="#06b6d4"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">MedAssist</span>
+          <span class="brand-tagline">AI Health Guide</span>
+        </div>
+      </div>
+
+      <!-- New Chat Button -->
+      <button class="new-chat-btn" id="newChatBtn" aria-label="Start a new chat session">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 1v14M1 8h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        New Conversation
+      </button>
+
+      <!-- Quick Topics -->
+      <div class="sidebar-section">
+        <span class="sidebar-section-title">Quick Topics</span>
+        <ul class="quick-topics" role="list">
+          <li>
+            <button class="topic-chip" data-topic="What are common symptoms of the flu and how can I manage them at home?" aria-label="Ask about flu symptoms">
+              <span class="topic-icon" aria-hidden="true">🤧</span> Flu Symptoms
+            </button>
+          </li>
+          <li>
+            <button class="topic-chip" data-topic="What lifestyle changes can help manage high blood pressure?" aria-label="Ask about blood pressure">
+              <span class="topic-icon" aria-hidden="true">❤️</span> Blood Pressure
+            </button>
+          </li>
+          <li>
+            <button class="topic-chip" data-topic="What are the warning signs of diabetes I should watch for?" aria-label="Ask about diabetes signs">
+              <span class="topic-icon" aria-hidden="true">🩸</span> Diabetes Signs
+            </button>
+          </li>
+          <li>
+            <button class="topic-chip" data-topic="How can I improve my sleep quality and manage insomnia naturally?" aria-label="Ask about sleep health">
+              <span class="topic-icon" aria-hidden="true">😴</span> Sleep Health
+            </button>
+          </li>
+          <li>
+            <button class="topic-chip" data-topic="What are effective ways to manage stress and anxiety?" aria-label="Ask about stress management">
+              <span class="topic-icon" aria-hidden="true">🧠</span> Mental Wellness
+            </button>
+          </li>
+          <li>
+            <button class="topic-chip" data-topic="What nutrients and vitamins are essential for a healthy immune system?" aria-label="Ask about nutrition">
+              <span class="topic-icon" aria-hidden="true">🥦</span> Nutrition & Diet
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Sidebar Footer -->
+      <div class="sidebar-footer">
+        <div class="disclaimer-badge" role="note" aria-label="Medical disclaimer">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <span>Not a substitute for professional medical advice</span>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="main-content" role="main">
+
+      <!-- Top Bar -->
+      <header class="topbar" role="banner">
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar" aria-expanded="true" aria-controls="sidebar">
+          <span class="hamburger-line" aria-hidden="true"></span>
+          <span class="hamburger-line" aria-hidden="true"></span>
+          <span class="hamburger-line" aria-hidden="true"></span>
+        </button>
+        <div class="topbar-center">
+          <span class="topbar-title">MedAssist</span>
+          <span class="status-indicator" id="statusIndicator" aria-live="polite" aria-label="AI status: Online">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span class="status-text">AI Online</span>
+          </span>
+        </div>
+        <button class="clear-chat-btn" id="clearChatBtn" aria-label="Clear chat history" title="Clear chat">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <path d="M3 5h12M7 5V3h4v2M14 5l-.9 10.1A1 1 0 0112.1 16H5.9a1 1 0 01-1-.9L4 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </header>
+
+      <!-- ===== DISCLAIMER BANNER ===== -->
+      <div class="disclaimer-banner" id="disclaimerBanner" role="alert" aria-label="Medical disclaimer notice">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 1L1 14h14L8 1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M8 6v4M8 12v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <p>
+          <strong>Medical Disclaimer:</strong> This chatbot provides general health information only and is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider.
+        </p>
+        <button class="dismiss-btn" id="dismissDisclaimer" aria-label="Dismiss disclaimer">✕</button>
+      </div>
+
+      <!-- ===== CHAT CONTAINER ===== -->
+      <div class="chat-container" id="chatContainer" role="log" aria-live="polite" aria-label="Chat messages">
+
+        <!-- Welcome Screen (shown when no messages) -->
+        <div class="welcome-screen" id="welcomeScreen" aria-label="Welcome to MedAssist">
+          <div class="welcome-icon" aria-hidden="true">
+            <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="64" height="64" rx="20" fill="url(#welcomeGrad)"/>
+              <path d="M32 14v36M14 32h36" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+              <defs>
+                <linearGradient id="welcomeGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#3b82f6"/>
+                  <stop offset="1" stop-color="#06b6d4"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <h1 class="welcome-title">Hello, I'm MedAssist</h1>
+          <p class="welcome-subtitle">Your AI-powered general health information companion.<br/>Ask me about symptoms, wellness tips, nutrition, and more.</p>
+          <div class="welcome-cards" role="list" aria-label="Suggested questions">
+            <button class="welcome-card" data-topic="What are the early warning signs of a heart attack?" role="listitem">
+              <span class="card-icon" aria-hidden="true">🫀</span>
+              <span class="card-text">Heart Attack Warning Signs</span>
+            </button>
+            <button class="welcome-card" data-topic="How can I naturally boost my immune system?" role="listitem">
+              <span class="card-icon" aria-hidden="true">🛡️</span>
+              <span class="card-text">Boost Your Immune System</span>
+            </button>
+            <button class="welcome-card" data-topic="What should I know about managing type 2 diabetes?" role="listitem">
+              <span class="card-icon" aria-hidden="true">🩺</span>
+              <span class="card-text">Managing Type 2 Diabetes</span>
+            </button>
+            <button class="welcome-card" data-topic="What are safe and effective ways to lose weight?" role="listitem">
+              <span class="card-icon" aria-hidden="true">⚖️</span>
+              <span class="card-text">Healthy Weight Management</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Messages are injected here by script.js -->
+        <div class="messages-list" id="messagesList" role="list" aria-label="Conversation messages"></div>
+
+        <!-- Typing Indicator -->
+        <div class="typing-indicator" id="typingIndicator" aria-live="polite" aria-label="MedAssist is typing" style="display:none;">
+          <div class="typing-avatar" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <rect width="16" height="16" rx="5" fill="url(#tiGrad)"/>
+              <path d="M8 3v10M3 8h10" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+              <defs>
+                <linearGradient id="tiGrad" x1="0" y1="0" x2="16" y2="16">
+                  <stop stop-color="#3b82f6"/><stop offset="1" stop-color="#06b6d4"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div class="typing-dots" aria-hidden="true">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
+          <span class="typing-label">MedAssist is thinking…</span>
+        </div>
+
+      </div>
+      <!-- end .chat-container -->
+
+      <!-- ===== INPUT AREA ===== -->
+      <div class="input-area" role="form" aria-label="Message input">
+        <div class="input-wrapper">
+          <textarea
+            id="userInput"
+            class="chat-input"
+            placeholder="Ask about symptoms, medications, wellness tips…"
+            rows="1"
+            maxlength="2000"
+            aria-label="Type your health question"
+            aria-multiline="true"
+            autocomplete="off"
+            spellcheck="true"
+          ></textarea>
+
+          <div class="input-actions">
+            <span class="char-counter" id="charCounter" aria-live="polite" aria-label="Character count">0 / 2000</span>
+            <button class="send-btn" id="sendBtn" aria-label="Send message" disabled>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M18 10L2 3l3.5 7L2 17l16-7z" fill="currentColor"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <p class="input-footnote">
+          MedAssist may make mistakes. For emergencies, call <strong>911</strong> immediately.
+        </p>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ===== ERROR TOAST ===== -->
+  <div class="toast" id="errorToast" role="alert" aria-live="assertive" aria-atomic="true" style="display:none;">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+      <circle cx="9" cy="9" r="8" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M9 5v5M9 13v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <span id="toastMessage">An error occurred.</span>
+    <button class="toast-close" id="toastClose" aria-label="Close notification">✕</button>
+  </div>
+
+  <!-- Scripts — config must load before script.js -->
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
