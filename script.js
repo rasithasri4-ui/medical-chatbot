@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ─── VERCEL SECURE API CALL (NO EXPOSED KEY) ─────────────────── */
   async function callGeminiAPI(userMessage) {
     // Vercel backend api folder route-uku fetch request anupuroam
-    const endpoint = 'https://medical-chatbot-xi-six.vercel.app/api/chat';';
+    const endpoint = 'https://medical-chatbot-xi-six.vercel.app/api/chat';
 
     const response = await fetch(endpoint, {
       method:  'POST',
