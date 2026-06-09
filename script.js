@@ -2,14 +2,14 @@
  * script.js — MedAssist Medical AI Chatbot
  *
  * Handles:
- *  - Gemini API integration via fetch()
- *  - Chat message rendering (user + AI)
- *  - Typing indicator, auto-scroll, timestamps
- *  - Sidebar toggle, quick topics, welcome cards
- *  - Session-based chat history
- *  - Emergency detection
- *  - Error handling & toast notifications
- *  - Character counter, send button state
+ * - Gemini API integration via fetch() [Vercel Secure Endpoint]
+ * - Chat message rendering (user + AI)
+ * - Typing indicator, auto-scroll, timestamps
+ * - Sidebar toggle, quick topics, welcome cards
+ * - Session-based chat history
+ * - Emergency detection
+ * - Error handling & toast notifications
+ * - Character counter, send button state
  */
 
 /* ─── WAIT FOR DOM ─────────────────────────────────────────────── */
@@ -36,20 +36,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const welcomeCards     = document.querySelectorAll('.welcome-card');
 
   /* ─── STATE ───────────────────────────────────────────────────── */
-
-  /**
-   * conversationHistory stores messages for Gemini multi-turn context.
-   * Each entry: { role: 'user'|'model', parts: [{ text: string }] }
-   */
   let conversationHistory = [];
-
-  /** Whether the AI is currently generating a response */
   let isGenerating = false;
-
-  /** Toast auto-dismiss timeout reference */
   let toastTimeout = null;
-
-  /** Mobile sidebar overlay element (created on demand) */
   let sidebarOverlay = null;
 
   /* ─── EMERGENCY KEYWORDS ──────────────────────────────────────── */
@@ -73,20 +62,11 @@ document.addEventListener('DOMContentLoaded', () => {
     /vomiting\s*blood/i,
   ];
 
-  /**
-   * Checks whether a message contains potential emergency keywords.
-   * @param {string} text
-   * @returns {boolean}
-   */
   function isEmergency(text) {
     return EMERGENCY_PATTERNS.some(pattern => pattern.test(text));
   }
 
   /* ─── UTILITY: TIMESTAMP ──────────────────────────────────────── */
-  /**
-   * Returns a human-readable time string (e.g. "9:42 AM").
-   * @returns {string}
-   */
   function getTimestamp() {
     return new Date().toLocaleTimeString([], {
       hour:   '2-digit',
@@ -95,11 +75,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ─── UTILITY: ESCAPE HTML ────────────────────────────────────── */
-  /**
-   * Escapes special HTML characters to prevent XSS.
-   * @param {string} text
-   * @returns {string}
-   */
   function escapeHtml(text) {
     const map = {
       '&':  '&amp;',
@@ -112,84 +87,47 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ─── UTILITY: SIMPLE MARKDOWN RENDERER ──────────────────────── */
-  /**
-   * Converts a subset of Markdown to HTML:
-   *   **bold**, *italic*, `code`, numbered/bulleted lists, line breaks.
-   * @param {string} text
-   * @returns {string}
-   */
   function renderMarkdown(text) {
-    // Escape HTML first to prevent XSS, then apply markdown.
     let html = escapeHtml(text);
-
-    // Bold
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    // Italic
     html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    // Inline code
     html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-    // Unordered lists (lines starting with - or •)
     html = html.replace(/^[\-•]\s+(.+)$/gm, '<li>$1</li>');
     html = html.replace(/(<li>.*<\/li>)/s, (match) => `<ul>${match}</ul>`);
-
-    // Ordered lists (lines starting with 1. 2. etc.)
     html = html.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
-
-    // Wrap consecutive <li> in <ol> if not already in <ul>
-    // Simple approach: wrap multiple sequential <li> blocks
     html = html.replace(/(?<!<\/ul>)(<li>(?:(?!<\/li>).)*<\/li>(?:\n<li>(?:(?!<\/li>).)*<\/li>)*)/gs, (match) => {
-      if (match.startsWith('<li>')) {
-        return `<ol>${match}</ol>`;
-      }
+      if (match.startsWith('<li>')) return `<ol>${match}</ol>`;
       return match;
     });
 
-    // Paragraph / line breaks — split on double newlines
     const paragraphs = html.split(/\n{2,}/);
     if (paragraphs.length > 1) {
       html = paragraphs
         .map(p => p.trim())
         .filter(p => p.length > 0)
         .map(p => {
-          if (p.startsWith('<ul>') || p.startsWith('<ol>') || p.startsWith('<li>')) {
-            return p;
-          }
+          if (p.startsWith('<ul>') || p.startsWith('<ol>') || p.startsWith('<li>')) return p;
           return `<p>${p.replace(/\n/g, '<br/>')}</p>`;
         })
         .join('');
     } else {
       html = html.replace(/\n/g, '<br/>');
     }
-
     return html;
   }
 
   /* ─── WELCOME SCREEN MANAGEMENT ──────────────────────────────── */
-  /** Hides the welcome screen and reveals the messages list. */
   function hideWelcomeScreen() {
     if (welcomeScreen && !welcomeScreen.classList.contains('hidden')) {
       welcomeScreen.classList.add('hidden');
     }
   }
 
-  /** Restores the welcome screen when the chat is cleared. */
   function showWelcomeScreen() {
-    if (welcomeScreen) {
-      welcomeScreen.classList.remove('hidden');
-    }
+    if (welcomeScreen) welcomeScreen.classList.remove('hidden');
   }
 
   /* ─── RENDER: APPEND MESSAGE ──────────────────────────────────── */
-  /**
-   * Creates and appends a message bubble to the chat.
-   *
-   * @param {'user'|'ai'} sender   - Who sent the message.
-   * @param {string}      text     - Message content (may contain markdown for AI).
-   * @param {boolean}     [isError=false] - Renders an error style for AI messages.
-   * @param {boolean}     [emergency=false] - Appends an emergency notice.
-   * @returns {HTMLElement} The root message element (for potential updates).
-   */
   function appendMessage(sender, text, isError = false, emergency = false) {
     hideWelcomeScreen();
 
@@ -197,7 +135,6 @@ document.addEventListener('DOMContentLoaded', () => {
     msg.className = `message ${sender}${isError ? ' error' : ''}`;
     msg.setAttribute('role', 'listitem');
 
-    // Avatar
     const avatar = document.createElement('div');
     avatar.className = 'message-avatar';
     avatar.setAttribute('aria-hidden', 'true');
@@ -218,18 +155,14 @@ document.addEventListener('DOMContentLoaded', () => {
       avatar.style.fontSize = '0.65rem';
     }
 
-    // Content wrapper
     const content = document.createElement('div');
     content.className = 'message-content';
 
-    // Bubble
     const bubble = document.createElement('div');
     bubble.className = 'message-bubble';
 
     if (sender === 'ai') {
       bubble.innerHTML = renderMarkdown(text);
-
-      // Emergency notice
       if (emergency) {
         const notice = document.createElement('div');
         notice.className = 'emergency-notice';
@@ -242,11 +175,9 @@ document.addEventListener('DOMContentLoaded', () => {
         bubble.appendChild(notice);
       }
     } else {
-      // User messages are plain text (already escaped inside renderMarkdown)
       bubble.textContent = text;
     }
 
-    // Timestamp
     const timestamp = document.createElement('div');
     timestamp.className = 'message-timestamp';
     timestamp.setAttribute('aria-label', `Sent at ${getTimestamp()}`);
@@ -264,11 +195,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ─── SCROLL TO BOTTOM ────────────────────────────────────────── */
-  /** Smoothly scrolls the chat container to the latest message. */
   function scrollToBottom() {
     requestAnimationFrame(() => {
       chatContainer.scrollTo({
-        top:      chatContainer.scrollHeight,
+        top:       chatContainer.scrollHeight,
         behavior: 'smooth',
       });
     });
@@ -285,10 +215,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ─── INPUT STATE MANAGEMENT ──────────────────────────────────── */
-  /**
-   * Enables/disables the input and send button.
-   * @param {boolean} enabled
-   */
   function setInputEnabled(enabled) {
     userInput.disabled = !enabled;
     sendBtn.disabled   = !enabled || userInput.value.trim() === '';
@@ -296,17 +222,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ─── TOAST NOTIFICATIONS ─────────────────────────────────────── */
-  /**
-   * Shows an error toast with a given message.
-   * Auto-dismisses after 5 seconds.
-   * @param {string} message
-   */
   function showToast(message) {
     toastMessage.textContent = message;
     errorToast.style.display = 'flex';
     errorToast.classList.remove('fade-out');
 
-    // Clear any existing timeout
     if (toastTimeout) clearTimeout(toastTimeout);
     toastTimeout = setTimeout(() => dismissToast(), 5000);
   }
@@ -319,185 +239,86 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 300);
   }
 
-  /* ─── VALIDATE CONFIG ─────────────────────────────────────────── */
-  /**
-   * Checks that config.js was loaded and the API key has been set.
-   * @returns {boolean}
-   */
-  function validateConfig() {
-    if (typeof CONFIG === 'undefined') {
-      showToast('Configuration error: config.js not found. Please check your setup.');
-      return false;
-    }
-    if (
-      !CONFIG.GEMINI_API_KEY ||
-      CONFIG.GEMINI_API_KEY === 'YOUR_API_KEY_HERE' ||
-      CONFIG.GEMINI_API_KEY.trim() === ''
-    ) {
-      appendMessage(
-        'ai',
-        '⚙️ **Setup Required**\n\n' +
-        'To use MedAssist, you need to add your Gemini API key:\n\n' +
-        '1. Open `config.js` in your project folder.\n' +
-        '2. Replace `YOUR_API_KEY_HERE` with your actual key.\n' +
-        '3. Get a free key at [Google AI Studio](https://aistudio.google.com/app/apikey).\n' +
-        '4. Save the file and refresh this page.\n\n' +
-        'Your key stays local — it is never sent anywhere except the Gemini API.',
-        false,
-        false
-      );
-      return false;
-    }
-    return true;
-  }
-
-  /* ─── GEMINI API CALL ─────────────────────────────────────────── */
-  /**
-   * Sends the conversation history to the Gemini API and returns the
-   * generated text response.
-   *
-   * @param {string} userMessage - The latest message from the user.
-   * @returns {Promise<string>}  - The AI's text response.
-   */
+  /* ─── VERCEL SECURE API CALL (NO EXPOSED KEY) ─────────────────── */
   async function callGeminiAPI(userMessage) {
-    const { GEMINI_API_KEY, GEMINI_MODEL, GEMINI_API_BASE_URL, SYSTEM_INSTRUCTION, MAX_TOKENS, TEMPERATURE } = CONFIG;
-
-    const endpoint = `${GEMINI_API_BASE_URL}/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-
-    // Build the request payload with full conversation history
-    const requestBody = {
-      system_instruction: {
-        parts: [{ text: SYSTEM_INSTRUCTION }],
-      },
-      contents: conversationHistory,
-      generationConfig: {
-        maxOutputTokens: MAX_TOKENS,
-        temperature:     TEMPERATURE,
-        topP:            0.9,
-        topK:            40,
-      },
-      safetySettings: [
-        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
-        { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-        { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      ],
-    };
+    // Vercel backend api folder route-uku fetch request anupuroam
+    const endpoint = '/api/chat';
 
     const response = await fetch(endpoint, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(requestBody),
+      body:    JSON.stringify({ message: userMessage }),
     });
 
-    // Handle HTTP-level errors
     if (!response.ok) {
-      let errorMsg = `API error ${response.status}: ${response.statusText}`;
-      try {
-        const errBody = await response.json();
-        if (errBody.error && errBody.error.message) {
-          errorMsg = errBody.error.message;
-        }
-      } catch (_) { /* ignore JSON parse errors on error responses */ }
-
-      // Provide user-friendly messages for common codes
-      if (response.status === 400) throw new Error('Invalid request. Please check your API key and try again.');
-      if (response.status === 401) throw new Error('Invalid API key. Please update your key in config.js.');
-      if (response.status === 403) throw new Error('API access denied. Verify your API key permissions.');
-      if (response.status === 429) throw new Error('Rate limit reached. Please wait a moment and try again.');
-      if (response.status >= 500)  throw new Error('Gemini API server error. Please try again later.');
-
-      throw new Error(errorMsg);
+      if (response.status === 500) {
+        throw new Error('API Key missing in Vercel settings or Server error.');
+      }
+      throw new Error(`Server error: ${response.status}`);
     }
 
     const data = await response.json();
-
-    // Extract generated text from response
     const candidate = data?.candidates?.[0];
     if (!candidate) {
       throw new Error('No response generated. The content may have been filtered.');
     }
 
-    // Check finish reason
-    const finishReason = candidate.finishReason;
-    if (finishReason === 'SAFETY') {
-      throw new Error('Response was blocked for safety reasons. Please rephrase your question.');
-    }
-    if (finishReason === 'RECITATION') {
-      throw new Error('Response blocked due to content policy. Please try a different question.');
-    }
-
     const text = candidate?.content?.parts?.[0]?.text;
     if (!text) {
-      throw new Error('Empty response received from the API. Please try again.');
+      throw new Error('Empty response received. Please try again.');
     }
 
     return text;
   }
 
   /* ─── SEND MESSAGE ────────────────────────────────────────────── */
-  /**
-   * Main handler: reads user input, sends to Gemini, renders response.
-   */
   async function sendMessage() {
     const text = userInput.value.trim();
 
-    // Guard: no empty messages, no concurrent requests
     if (!text || isGenerating) return;
 
-    // Validate API key / config
-    if (!validateConfig()) return;
-
-    // ── 1. Render user message ──
+    // 1. Render user message
     appendMessage('user', text);
 
-    // ── 2. Clear input ──
+    // 2. Clear input
     userInput.value = '';
     autoResizeTextarea();
     updateCharCounter();
     setInputEnabled(false);
 
-    // ── 3. Add to conversation history (for Gemini multi-turn) ──
+    // 3. Add to conversation history
     conversationHistory.push({
       role:  'user',
       parts: [{ text }],
     });
 
-    // ── 4. Check for emergency keywords ──
+    // 4. Check for emergency
     const emergency = isEmergency(text);
 
-    // ── 5. Show typing indicator ──
+    // 5. Show typing indicator
     isGenerating = true;
     showTypingIndicator();
 
     try {
-      // ── 6. Call Gemini API ──
+      // 6. Call secure Vercel API
       const aiResponse = await callGeminiAPI(text);
 
-      // ── 7. Add AI response to history ──
+      // 7. Add AI response to history
       conversationHistory.push({
         role:  'model',
         parts: [{ text: aiResponse }],
       });
 
-      // ── 8. Render AI response ──
+      // 8. Render AI response
       hideTypingIndicator();
       appendMessage('ai', aiResponse, false, emergency);
 
     } catch (error) {
-      // ── 9. Handle errors ──
       hideTypingIndicator();
-
-      const errorText =
-        error.message ||
-        'An unexpected error occurred. Please check your connection and try again.';
-
+      const errorText = error.message || 'An unexpected error occurred.';
       appendMessage('ai', `❌ ${errorText}`, true, false);
       showToast(errorText);
-
-      // Remove the user message from history since it didn't get a valid response
       conversationHistory.pop();
-
     } finally {
       isGenerating = false;
       setInputEnabled(true);
@@ -505,7 +326,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ─── AUTO-RESIZE TEXTAREA ────────────────────────────────────── */
-  /** Dynamically grows / shrinks the textarea based on content. */
   function autoResizeTextarea() {
     userInput.style.height = 'auto';
     const maxHeight = 140;
@@ -542,7 +362,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const isMobile = window.innerWidth <= 640;
 
     if (isMobile) {
-      // On mobile: absolute positioned sidebar with overlay
       sidebar.classList.toggle('open');
       if (sidebar.classList.contains('open')) {
         if (!sidebarOverlay) {
@@ -555,12 +374,8 @@ document.addEventListener('DOMContentLoaded', () => {
         closeSidebarMobile();
       }
     } else {
-      // On desktop: collapse sidebar
       sidebar.classList.toggle('collapsed');
-      sidebarToggle.setAttribute(
-        'aria-expanded',
-        (!sidebar.classList.contains('collapsed')).toString()
-      );
+      sidebarToggle.setAttribute('aria-expanded', (!sidebar.classList.contains('collapsed')).toString());
     }
   }
 
@@ -571,26 +386,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  /* ─── HANDLE QUICK TOPIC / WELCOME CARD CLICK ────────────────── */
-  /**
-   * Pre-fills the input with a suggested topic and sends it.
-   * @param {string} topic
-   */
+  /* ─── HANDLE QUICK TOPIC CLICK ────────────────────────────────── */
   function handleTopicClick(topic) {
     if (isGenerating) return;
     userInput.value = topic;
     autoResizeTextarea();
     updateCharCounter();
-    // On mobile, close sidebar first
     if (window.innerWidth <= 640) closeSidebarMobile();
     sendMessage();
   }
 
   /* ─── DISPLAY WELCOME MESSAGE ─────────────────────────────────── */
-  /**
-   * Appends the initial AI greeting message to the chat.
-   * Called once on page load after DOM is ready.
-   */
   function displayWelcomeMessage() {
     const greeting =
       `👋 **Welcome to MedAssist!** I'm your AI-powered health information companion.\n\n` +
@@ -606,11 +412,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ─── EVENT LISTENERS ─────────────────────────────────────────── */
-
-  // Send on button click
   sendBtn.addEventListener('click', () => sendMessage());
 
-  // Send on Enter (Shift+Enter = new line)
   userInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -618,13 +421,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Auto-resize textarea & update char counter on input
   userInput.addEventListener('input', () => {
     autoResizeTextarea();
     updateCharCounter();
   });
 
-  // Paste handling (auto-resize after paste)
   userInput.addEventListener('paste', () => {
     requestAnimationFrame(() => {
       autoResizeTextarea();
@@ -632,14 +433,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // New chat button
   newChatBtn.addEventListener('click', () => {
     clearChat();
-    // Close sidebar on mobile
     if (window.innerWidth <= 640) closeSidebarMobile();
   });
 
-  // Clear chat button (topbar)
   clearChatBtn.addEventListener('click', () => {
     if (conversationHistory.length === 0 && messagesList.children.length === 0) return;
     if (window.confirm('Clear the current conversation? This cannot be undone.')) {
@@ -647,35 +445,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Sidebar toggle
   sidebarToggle.addEventListener('click', () => toggleSidebar());
 
-  // Quick topic chips (sidebar)
   topicChips.forEach(chip => {
     chip.addEventListener('click', () => {
       handleTopicClick(chip.dataset.topic);
     });
   });
 
-  // Welcome cards
   welcomeCards.forEach(card => {
     card.addEventListener('click', () => {
       handleTopicClick(card.dataset.topic);
     });
   });
 
-  // Dismiss disclaimer banner
   dismissDisclaimer.addEventListener('click', () => {
     disclaimerBanner.classList.add('hidden');
   });
 
-  // Toast close button
   toastClose.addEventListener('click', () => dismissToast());
 
-  // Handle window resize (sidebar behavior changes between mobile/desktop)
   window.addEventListener('resize', () => {
     if (window.innerWidth > 640) {
-      // Remove mobile-specific classes when resizing to desktop
       sidebar.classList.remove('open');
       if (sidebarOverlay && sidebarOverlay.parentNode) {
         document.body.removeChild(sidebarOverlay);
@@ -684,16 +475,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ─── INITIALISE ──────────────────────────────────────────────── */
-
-  // Focus input on load (desktop)
   if (window.innerWidth > 640) {
     userInput.focus();
   }
-
-  // Initialise char counter
   updateCharCounter();
-
-  // Display the AI welcome message
   displayWelcomeMessage();
-
 });
