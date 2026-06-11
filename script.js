@@ -258,17 +258,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const data = await response.json();
-    const candidate = data?.candidates?.[0];
-    if (!candidate) {
-      throw new Error('No response generated. The content may have been filtered.');
-    }
-
-    const text = candidate?.content?.parts?.[0]?.text;
-    if (!text) {
-      throw new Error('Empty response received. Please try again.');
-    }
-
-    return text;
+    const data = await response.json();
+    return data.text;
   }
 
   /* ─── SEND MESSAGE ────────────────────────────────────────────── */
